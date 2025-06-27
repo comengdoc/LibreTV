@@ -110,6 +110,14 @@ const API_SITES = {
         api: 'https://ikunzyapi.com/api.php/provide/vod',
         name: 'iKun资源'
     },
+    mdzy: {
+        api: 'https://www.bt4.cc/api.php/provide/vod',
+        name: '麻豆资源'
+    },
+    91zy: {
+        api: 'https://91md.me/api.php/provide/vod',
+        name: '91资源'
+    },
     testSource: {
         api: 'https://www.example.com/api.php/provide/vod',
         name: '空内容测试源',
