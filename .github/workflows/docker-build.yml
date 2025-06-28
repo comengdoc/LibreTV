@@ -1,37 +1,53 @@
-name: Build and Push LibreTV
+name: Build LibreTV image
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["Bump version"]
+    types: 
+      - completed
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Build LibreTV image
     runs-on: ubuntu-latest
+    # 仅在你的 Fork 仓库触发
+    if: github.repository == 'ethansoon/libretv'
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Read version
+      - name: Read version from VERSION.txt
         id: version
-        run: echo "VERSION=$(cat VERSION.txt)" >> $GITHUB_OUTPUT
+        run: |
+          echo "VERSION=$(cat VERSION.txt)" >> $GITHUB_OUTPUT
 
-      - name: Setup QEMU & Buildx
+      - name: Set Docker image tags
+        id: set-tag
+        run: |
+          echo "TAGS=ethansoon/libretv:latest,ethansoon/libretv:${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to DockerHub
+      - name: Log in to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & Push
-        uses: docker/build-push-action@v6
+      - name: Build and push LibreTV image
+        uses: docker/build-push-action@v6.14.0
         with:
           context: .
           file: Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
           push: true
-          tags: |
-            ethansoon/libretv:latest
-            ethansoon/libretv:${{ steps.version.outputs.VERSION }}
+          tags: ${{ steps.set-tag.outputs.TAGS }}
+          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
